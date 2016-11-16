@@ -1,0 +1,239 @@
+{
+  "Resources" : {
+    "CFVPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsSupport": "true",
+        "EnableDnsHostnames": "true",
+        "InstanceTenancy": "default"
+      }
+    },
+    "MyInternetGateway" : {
+      "Type" : "AWS::EC2::InternetGateway",
+      "Properties" : {
+      }
+    },
+    "GatewayToInternet": {
+      "DependsOn": [
+        "CFVPC",
+        "MyInternetGateway"
+      ],
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "CFVPC"
+        },
+        "InternetGatewayId": {
+          "Ref": "MyInternetGateway"
+        }
+      }
+    },
+    "PublicSubnet": {
+      "DependsOn": ["CFVPC"],
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "CFVPC"
+        },
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": "true"
+      }
+    },
+    "PrivateSubnet": {
+      "DependsOn": ["CFVPC"],
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "CFVPC"
+        },
+        "CidrBlock": "10.0.1.0/24"
+      }
+    },
+    "EIP": {
+      "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain" : "vpc"
+      }
+    },
+    "MyNAT": {
+      "Type": "AWS::EC2::NatGateway",
+      "Properties":{
+        "AllocationId" : { "Fn::GetAtt" : ["EIP", "AllocationId"]},
+        "SubnetId" : { "Ref" : "PrivateSubnet"}
+      }
+    },
+    "PrivateRouteTable": {
+      "DependsOn": ["CFVPC"],
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "CFVPC"
+        }
+      }
+    },
+    "PublicRouteTable": {
+      "DependsOn": ["CFVPC"],
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "CFVPC"
+        }
+      }
+    },
+    "PublicRouteToWorld": {
+      "Type" : "AWS::EC2::Route",
+      "DependsOn": ["MyInternetGateway"],
+      "Properties" : {
+          "DestinationCidrBlock" : "0.0.0.0/0",
+          "GatewayId" : { "Ref" : "MyInternetGateway" },
+          "RouteTableId" : { "Ref" : "PublicRouteTable" }
+      }
+    },
+    "PrivateRouteToWorld": {
+      "Type" : "AWS::EC2::Route",
+      "DependsOn": ["MyNAT"],
+      "Properties" : {
+          "DestinationCidrBlock" : "0.0.0.0/0",
+          "NatGatewayId" : { "Ref" : "MyNAT" },
+          "RouteTableId" : { "Ref" : "PrivateRouteTable" }
+      }
+    },
+    "PublicRouteTableAssociation": {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "DependsOn": [
+        "PublicRouteTable",
+        "PublicSubnet"
+      ],
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PublicRouteTable" },
+        "SubnetId" : { "Ref" : "PublicSubnet" }
+      }
+    },
+    "PrivateRouteTableAssociation": {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "DependsOn": [
+        "PrivateRouteTable",
+        "PrivateSubnet"
+      ],
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PrivateRouteTable" },
+        "SubnetId" : { "Ref" : "PrivateSubnet" }
+      }
+    },
+    "PublicACL": {
+      "DependsOn": ["CFVPC"],
+      "Type": "AWS::EC2::NetworkAcl",
+      "Properties": {
+        "VpcId" : { "Ref" : "CFVPC" }
+      }
+    },
+    "PublicACLInboundAllowAll": {
+      "Type" : "AWS::EC2::NetworkAclEntry",
+      "DependsOn": ["PublicACL"],
+      "Properties" : {
+          "CidrBlock" : "0.0.0.0/0",
+          "Egress" : "true",
+          "NetworkAclId" : { "Ref" : "PublicACL" },
+          "Protocol" : -1,
+          "RuleAction" : "allow",
+          "RuleNumber" : "1"
+      }
+    },
+    "PrivateACL": {
+      "DependsOn": ["CFVPC"],
+      "Type": "AWS::EC2::NetworkAcl",
+      "Properties": {
+        "VpcId" : { "Ref" : "CFVPC" }
+      }
+    },
+    "PrivateACLInboundAllowAll": {
+      "Type" : "AWS::EC2::NetworkAclEntry",
+      "DependsOn": ["PrivateACL"],
+      "Properties" : {
+          "CidrBlock" : "0.0.0.0/0",
+          "Egress" : "true",
+          "NetworkAclId" : { "Ref" : "PrivateACL" },
+          "Protocol" : -1,
+          "RuleAction" : "allow",
+          "RuleNumber" : "1"
+      }
+    },
+    "UbuntuInstance":{
+      "Type" : "AWS::EC2::Instance",
+      "DependsOn" : [
+        "UbuntuSecurityGroup",
+        "PublicSubnet"
+      ],
+      "Properties" : {
+        "KeyName": "waina",
+        "ImageId" : "ami-0143e161",
+        "InstanceType": "t2.micro",
+        "SourceDestCheck": "false",
+        "InstanceInitiatedShutdownBehavior" : "stop",
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash \n",
+                "apt-get update \n",
+                "apt-get install -y git-core maven openjdk-8-jdk \n",
+                "git clone https://github.com/nesanche/jetty-helloworld-example \n",
+                "cd jetty-helloworld-example \n",
+                "mvn jetty:run \n"
+              ]
+            ]
+          }
+        },
+        "NetworkInterfaces" : [
+          {
+            "DeviceIndex" : "0",
+            "AssociatePublicIpAddress": "true",
+            "DeleteOnTermination": "true",
+            "GroupSet" : [
+              {
+                "Ref": "UbuntuSecurityGroup"
+              }
+            ],
+            "SubnetId" : { "Ref" : "PublicSubnet" }
+          }
+        ]
+      }
+    },
+    "UbuntuSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "DependsOn": [
+        "CFVPC"
+      ],
+      "Properties": {
+        "GroupDescription" : "Allow only SSH and HTTP",
+        "VpcId": {
+          "Ref": "CFVPC"
+        },
+        "SecurityGroupEgress" : [
+          {
+            "CidrIp" : "0.0.0.0/0",
+            "FromPort" : 0,
+            "IpProtocol" : "tcp",
+            "ToPort" : 65535
+          }
+        ],
+        "SecurityGroupIngress" : [
+          {
+            "CidrIp" : "0.0.0.0/0",
+            "FromPort" : 22,
+            "IpProtocol" : "tcp",
+            "ToPort" : 22
+          },
+          {
+            "CidrIp" : "0.0.0.0/0",
+            "FromPort" : 8080,
+            "IpProtocol" : "tcp",
+            "ToPort" : 8080
+          }
+        ]
+      }
+    }
+  }
+}

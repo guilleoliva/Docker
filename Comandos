@@ -1,0 +1,55 @@
+    1  echo -e "AT" > /dev/ttyUSB0 
+    2  stty -speed 19200 -f /dev/ttyUSB0 
+    3  stty --help
+    4  clear
+    5  stty -F /dev/ttyUSB0 speed 57600 cs8 -cstopb -parenb
+    6  echo '\xff\xff\xaa\x02\x02\x01\x23' > /dev/ttyUSB0 
+    7  echo -e '\xff\xff\xaa\x02\x02\x01\x23' > /dev/ttyUSB0 
+    8  echo -e '\xff\xff\xaa\x03\x03\x01\x23' > /dev/ttyUSB0 
+    9  echo -e '\xff\xff\xaa\x01\x01\x01\x23' > /dev/ttyUSB0 
+   10  echo -e '\xff\xff\xaa\x02\x01\x01\x23' > /dev/ttyUSB0 
+   11  echo -e '\xff\xff\xaa\x03\x03\x01\x23' > /dev/ttyUSB0 
+   12  echo -e '\xff\xff\xaa\x01\x03\x01\x23' > /dev/ttyUSB0 
+   13  echo -e '\xff\xff\xaa\x02\x03\x01\x23' > /dev/ttyUSB0 
+   14  echo -e '\xff\xff\xaa\x00\x00\x01\x23' > /dev/ttyUSB0 
+   15  echo -e '\xff\xff\xaa\x01\x03\x01\x23' > /dev/ttyUSB0 
+   16  echo -e '\xff\xff\xaa\x02\x03\x01\x23' > /dev/ttyUSB0 
+   17  echo -e '\xff\xff\xaa\x02\x01\x01\x23' > /dev/ttyUSB0 
+   18  echo -e '\xff\xff\xaa\x02\x03\x01\x23' > /dev/ttyUSB0 clear
+   19  clear
+   20  echo -e '\xff\xff\xaa\x00\x00\x01\x23' > /dev/ttyUSB0 
+   21  echo -e '\xff\xff\xaa\x02\x01\x01\x23' > /dev/ttyUSB0 
+   22  echo -e '\xff\xff\xaa\x01\x02\x01\x23' > /dev/ttyUSB0 
+   23  echo -e '\xff\xff\xaa\x03\x02\x01\x23' > /dev/ttyUSB0 
+   24  echo -e '\xff\xff\xaa\x02\x02\x01\x23' > /dev/ttyUSB0 
+   25  echo -e '\xff\xff\xaa\x03\x03\x01\x23' > /dev/ttyUSB0 
+   26  echo -e '\xff\xff\xaa\x02\x02\x01\x23' > /dev/ttyUSB0 
+   27  echo -e '\xff\xff\xaa\x01\x01\x01\x23' > /dev/ttyUSB0 
+   28  echo -e '\xff\xff\xaa\x00\x00\x01\x23' > /dev/ttyUSB0 
+   29  echo -e '\xff\xff\xaa\x01\x01\x01\x23' > /dev/ttyUSB0 
+   30  echo -e '\xff\xff\xaa\x02\x02\x01\x23' > /dev/ttyUSB0 
+   31  echo -e '\xff\xff\xaa\x03\x03\x01\x23' > /dev/ttyUSB0 
+   32  ls
+   33  cd /home/lucas/
+   34  ls
+   35  docker build -t imagendockerfile .
+   36  service docker status
+   37  docker build -t imagendockerfile .
+   38  ls
+   39  docker images
+   40  docker run imagendockerfile
+   41  docker run -d -v /opt/data/ /data -p 8080:8080 --restart=always --name="my-java-server" imagendockerfile
+   42  docker run -d -v /opt/data/:/data -p 8080:8080 --restart=always --name="my-java-server" imagendockerfile
+   43  docker images
+   44  sudo docker tag imagendockerfile 
+   45  sudo docker login
+   46  sudo docker tag imagendockerfile 
+   47  sudo docker tag imagendockerfile guilleoliva/docker 
+   48  sudo docker push guilleoliva/docker
+   49  docker images
+   50  docker tag guilleoliva/docker guilleoliva/docker:1.0.0
+   51  docker images
+   52  sudo docker push guilleoliva/docker:1.0.0
+   53  docker images
+   54  history
+
