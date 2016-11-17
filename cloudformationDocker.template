@@ -1,4 +1,9 @@
 {
+"Parameters" : {
+  "ImageVersion" : {
+    "Type" : "String"
+  }
+},
   "Resources" : {
     "CFVPC": {
       "Type": "AWS::EC2::VPC",
@@ -187,8 +192,7 @@
 	        "apt-get update \n",
 		"apt-get install -y docker-engine \n",
 	        "service docker start \n",
-		"docker pull guilleoliva/docker \n",
-		"docker run -d -v /opt/data:/data -p 8080:8080 --restart=always --name='my-java-server' guilleoliva/docker \n"		
+		"docker run -d -v /opt/data:/data -p 8080:8080 --restart=always --name='my-java-server' guilleoliva/dockerimage:",{"Ref":"ImageVersion"}," \n"		
               ]
             ]
           }
